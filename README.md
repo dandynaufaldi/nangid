@@ -3,9 +3,9 @@
 Sample paylod to app API
 ```json
 {
-    'prediction' : {
-        'text' : 'menangis-lapar',
-        'num' : 2
+    "prediction" : {
+        "text" : "menangis-lapar",
+        "num" : 2
     }
 }
 ```
