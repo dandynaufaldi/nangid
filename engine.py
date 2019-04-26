@@ -112,8 +112,9 @@ def fire_server(label_num: int, label_text: str) -> int:
             'num': label_num
         }
     }
-    payload = json.dumps(payload)
-    r = requests.post(URL, data=payload)
+    # payload = json.dumps(payload)
+    r = requests.post(URL, json=payload)
+    print(r.text)
     return r.status_code
 
 
