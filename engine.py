@@ -61,7 +61,7 @@ def load_process_audio(filename: str) -> list:
     print('[Load and Processing]')
     extractions = []
     for offset in range(5):
-        data, _ = librosa.load(filename, offset=offset, duration=5.0)
+        data, _ = librosa.load(filename, offset=offset, duration=5.0, res_type='kaiser_fast')
         feature = extract_feature(data)
         extractions.append(feature)
     extractions = np.array(extractions)
