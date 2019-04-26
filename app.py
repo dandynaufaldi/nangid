@@ -3,7 +3,7 @@ import os
 from flask import Flask, render_template, request
 from werkzeug import secure_filename
 
-from engine import load_process_audio, predict
+from engine import load_process_audio, predict, NUM2TEXT
 
 app = Flask(__name__)
 SAVE_DIR = "storage"
@@ -27,7 +27,7 @@ def inference():
     f.save(filename)
     feature = load_process_audio(filename)
     prediction = predict(feature)
-    pred_str = "Crying baby" if prediction == 0 else "Not crying baby"
+    pred_str = NUM2TEXT[prediction]
     print(pred_str)
     return pred_str
 

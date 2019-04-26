@@ -1,9 +1,12 @@
+import json
 import pickle
+import time
+
+import requests
 
 import librosa
 import numpy as np
 from scipy.stats import skew
-import time
 
 label = ['crying_baby', 'silence', 'noise', 'baby_laugh']
 num = list(range(len(label)))
@@ -11,12 +14,22 @@ num = list(range(len(label)))
 lab2num = dict(zip(label, num))
 num2lab = dict(zip(num, label))
 
-MODEL_PATH = "rf.pickle"
+NUM2TEXT = {
+    0: "tidak menangis",
+    1: "menangis-tidak lapar",
+    2: "menangis-lapar"
+}
+
+MODEL_CRY = "rf_cry.pickle"
+MODEL_HUNGRY = "rf_hungry.pickle"
 SCALER_PATH = "scaler.pickle"
 AUDIO_PATH = "Crowd.mp3"
 
-with open(MODEL_PATH, 'rb') as f:
-    model = pickle.load(f)
+with open(MODEL_CRY, 'rb') as f:
+    model_cry = pickle.load(f)
+
+with open(MODEL_HUNGRY, 'rb') as f:
+    model_hungry = pickle.load(f)
 
 with open(SCALER_PATH, 'rb') as f:
     scaler = pickle.load(f)
@@ -56,16 +69,52 @@ def load_process_audio(filename: str) -> list:
 
 
 def predict(feature: np.ndarray) -> int:
-    global model, scaler
+    global model_cry, model_hungry, scaler
     print('[Predicting]')
 
     X = scaler.transform(feature)
-    prediction = model.predict(X)
+    prediction_cry = model_cry.predict(X)
 
-    if sum(prediction) > len(prediction) / 2.0:
-        return 1  # other
+    if sum(prediction_cry) > len(prediction_cry) / 2.0:
+        prediction_cry = 1  # other
     else:
-        return 0  # crying baby
+        prediction_cry = 0  # crying baby
+
+    prediction_hungry = 0
+    if prediction_cry == 0:
+        prediction_hungry = model_hungry.predict(X)
+        if sum(prediction_hungry) > len(prediction_hungry) / 2.0:
+            prediction_hungry = 1  # other
+        else:
+            prediction_hungry = 0  # hungry-crying baby
+
+    label_num = 0
+    label_text = ""
+
+    if prediction_cry == 1:
+        label_num = 0
+    else:
+        if prediction_hungry == 1:
+            label_num = 1
+        else:
+            label_num = 2
+    label_text = NUM2TEXT[label_num]
+    status = fire_server(label_num, label_text)
+    print(status)
+    return label_num
+
+
+def fire_server(label_num: int, label_text: str) -> int:
+    URL = "https://smartincu.cutepeeg.com/api/sendPredict"
+    payload = {
+        'prediction': {
+            'text': label_text,
+            'num': label_num
+        }
+    }
+    payload = json.dumps(payload)
+    r = requests.post(URL, data=payload)
+    return r.status_code
 
 
 if __name__ == "__main__":
@@ -74,6 +123,6 @@ if __name__ == "__main__":
     prediction = predict(feature)
     finish = time.time()
     elapsed = finish - start
-    pred_str = "Crying baby" if prediction == 0 else "Not crying baby"
+    pred_str = NUM2TEXT[prediction]
     print(pred_str)
     print('Time elapsed :{:.3f} secs'.format(elapsed))
