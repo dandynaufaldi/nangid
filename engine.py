@@ -15,6 +15,12 @@ MODEL_PATH = "rf.pickle"
 SCALER_PATH = "scaler.pickle"
 AUDIO_PATH = "Crowd.mp3"
 
+with open(MODEL_PATH, 'rb') as f:
+    model = pickle.load(f)
+
+with open(SCALER_PATH, 'rb') as f:
+    scaler = pickle.load(f)
+
 
 def extract_feature(data: np.ndarray) -> np.ndarray:
     ft1 = librosa.feature.mfcc(data, n_mfcc=30)[..., :210]
@@ -50,12 +56,8 @@ def load_process_audio(filename: str) -> list:
 
 
 def predict(feature: np.ndarray) -> int:
+    global model, scaler
     print('[Predicting]')
-    with open(MODEL_PATH, 'rb') as f:
-        model = pickle.load(f)
-
-    with open(SCALER_PATH, 'rb') as f:
-        scaler = pickle.load(f)
 
     X = scaler.transform(feature)
     prediction = model.predict(X)

@@ -8,10 +8,6 @@ from engine import load_process_audio, predict
 app = Flask(__name__)
 SAVE_DIR = "storage"
 
-# @app.route('/upload')
-# def upload_file():
-#     return render_template('upload.html')
-
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -32,8 +28,9 @@ def inference():
     feature = load_process_audio(filename)
     prediction = predict(feature)
     pred_str = "Crying baby" if prediction == 0 else "Not crying baby"
+    print(pred_str)
     return pred_str
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=True, host='0.0.0.0', port=8080)
